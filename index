@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <title>Clearview Dashboard</title>
+    
+    <meta name="apple-mobile-web-app-title" content="Clearview">
+    <meta name="application-name" content="Clearview">
+    
+    <link rel="shortcut icon" href="favicon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+    <link rel="apple-touch-icon" href="app-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="app-icon.png">
+
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#050505">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-black: #050505;
+            --card-bg: #111111;
+            --card-border: #222222;
+            --accent: #ffcc00;
+            --text-main: #ffffff;
+            --text-sec: #888888;
+            --success: #00e676;
+            --danger: #ff5252;
+
+            /* Paleta Premium */
+            --c-rf: #ffcc00; --c-reserva: #ffe680; --c-rv: #ffffff; 
+            --c-imov: #d1d1d1; --c-cripto: #787878; --c-inter: #4a4a4a; --c-outros: #8c6e00;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; outline: none; }
+        
+        body {
+            background-color: var(--bg-black);
+            color: var(--text-main);
+            padding: 20px;
+            padding-top: 80px;
+            padding-bottom: 60px;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0;
+            background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(10px);
+            padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #222; z-index: 100;
+        }
+        .logo-img { height: 35px; display: block; }
+        .hamburger { font-size: 1.5rem; background: none; border: none; color: white; cursor: pointer; }
+
+        /* MENU */
+        .sidenav {
+            height: 100%; width: 0; position: fixed; z-index: 200; top: 0; right: 0;
+            background-color: #111; overflow-x: hidden; transition: 0.3s;
+            padding-top: 60px; box-shadow: -5px 0 15px rgba(0,0,0,0.5); border-left: 1px solid #333;
+        }
+        .sidenav a {
+            padding: 15px 30px; text-decoration: none; font-size: 1rem; color: #ddd; display: flex; align-items: center; gap: 10px; transition: 0.3s;
+        }
+        .sidenav a:hover { color: var(--accent); background: #222; }
+        .sidenav .closebtn { position: absolute; top: 0; right: 25px; font-size: 36px; margin-left: 50px; margin-top: 10px; }
+        .menu-title { padding: 0 30px; font-size: 0.8rem; color: #666; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px; }
+        .overlay-bg { position: fixed; display: none; width: 100%; height: 100%; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.7); z-index: 150; }
+
+        /* GERAL */
+        .greeting-section { margin-bottom: 25px; margin-top: 10px; }
+        .greeting { font-size: 1rem; color: var(--text-sec); }
+        .client-name { color: var(--accent); font-weight: 700; font-size: 1.2rem; }
+
+        .card {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 16px; padding: 20px; margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .card-title {
+            font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-sec);
+            margin-bottom: 15px; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        /* INPUTS PADRÃO (TOPO) */
+        .input-group {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+            background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 8px;
+        }
+        .input-label { font-size: 0.85rem; color: #ccc; }
+        .money-input {
+            background: transparent; border: none; color: var(--text-main);
+            font-weight: 600; text-align: right; font-size: 0.95rem; width: 130px;
+        }
+        .money-input:focus { color: var(--accent); }
+
+        /* FLUXO MENSAL - ESTILOS ESPECÍFICOS */
+        .cat-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px; background: #1a1a1a; border-radius: 8px; margin-bottom: 5px;
+            cursor: pointer; border: 1px solid #333; transition: all 0.2s;
+        }
+        .cat-header:active { transform: scale(0.98); }
+        /* Título Normal */
+        .cat-title { font-size: 0.9rem; font-weight: 400; color: #eee; display: flex; align-items: center; gap: 8px; }
+        
+        /* TOTAL EM NEGRITO E BRANCO */
+        .cat-total { font-size: 0.9rem; color: #ffffff; font-weight: 700; }
+        
+        .arrow { font-size: 0.7rem; transition: transform 0.3s; color: #666; }
+        .cat-header.active .arrow { transform: rotate(180deg); }
+        .cat-header.active { border-color: var(--accent); }
+
+        .cat-content {
+            display: none; padding: 10px 5px; margin-bottom: 15px;
+            border-left: 2px solid #333; margin-left: 10px; padding-left: 10px;
+        }
+        .cat-content.show { display: block; animation: slideDown 0.3s ease; }
+
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* LINHA DE DESPESA */
+        .expense-row {
+            display: grid; grid-template-columns: 1.5fr 1fr 0.8fr; gap: 8px; align-items: center;
+            margin-bottom: 12px; border-bottom: 1px solid #222; padding-bottom: 8px;
+        }
+        .expense-row:last-child { border-bottom: none; }
+        
+        /* Nome do Gasto sem negrito */
+        .lbl-input {
+            background: transparent; border: none; color: #ccc; font-size: 0.8rem; width: 100%;
+            border-bottom: 1px solid transparent; transition: 0.3s; font-weight: 400;
+        }
+        .lbl-input:focus { border-bottom: 1px solid var(--accent); color: white; }
+        
+        /* BOX INPUT (VALORES) E SELECT */
+        .box-input, .pay-select {
+            background: #222; 
+            color: #fff;
+            border: 1px solid #333; 
+            border-radius: 4px;
+            font-size: 0.75rem; 
+            padding: 8px 4px; 
+            width: 100%; 
+            text-align: center;
+            
+            /* VALOR EM NEGRITO */
+            font-weight: 700; 
+            
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+        }
+        
+        .box-input:focus, .pay-select:focus {
+            border-color: var(--accent);
+            outline: none;
+        }
+
+        .pay-select { font-weight: 400; color: #ccc; } 
+
+        /* OUTROS */
+        .chart-donut-container { position: relative; height: 220px; margin: 10px 0; }
+        .total-center { text-align: center; margin-top: -10px; margin-bottom: 20px; }
+        .total-center h3 { font-size: 1.8rem; color: var(--text-main); }
+        .total-center span { color: var(--text-sec); font-size: 0.8rem; }
+
+        .meta-wrapper { margin-top: 20px; }
+        .progress-track { background: #222; height: 8px; border-radius: 4px; overflow: hidden; margin: 8px 0; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #b38f00, var(--accent)); width: 0%; transition: width 1s ease; }
+        .meta-info { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: var(--text-sec); }
+        .meta-input-inline { background: none; border: none; color: #888; width: 100px; text-align: right; font-size: 0.8rem; }
+
+        .invest-result {
+            background: rgba(255, 204, 0, 0.05); border: 1px solid #554400;
+            padding: 15px; border-radius: 12px; text-align: center; margin-top: 15px;
+        }
+        .invest-val { font-size: 1.8rem; font-weight: 700; color: var(--accent); display: block; }
+        .invest-label { font-size: 0.8rem; color: var(--text-sec); text-transform: uppercase; }
+
+        .btn-reset {
+            width: 100%; background: #222; border: 1px solid #333; color: #666; padding: 10px;
+            border-radius: 8px; font-size: 0.8rem; margin-top: 15px; cursor: pointer;
+        }
+        .btn-reset:active { background: #333; color: white; }
+
+        /* CALCULATOR */
+        .calc-grid { display: grid; gap: 10px; }
+        .calc-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .col-half { flex: 1; }
+        .calc-label { display: block; font-size: 0.75rem; color: var(--text-sec); margin-bottom: 5px; }
+        .custom-select { background: #222; border: 1px solid #333; color: white; padding: 2px 5px; border-radius: 4px; font-size: 0.7rem; margin-left: 5px; }
+        .calc-input-styled { width: 100%; background: #1a1a1a; border: 1px solid #333; color: white; padding: 12px; border-radius: 8px; font-size: 1rem; }
+        .btn-calc { width: 100%; background: var(--accent); color: #000; border: none; padding: 15px; border-radius: 8px; font-weight: 700; margin-top: 15px; font-size: 1rem; cursor: pointer; }
+
+        .projection-container { margin-top: 30px; display: none; border-top: 1px dashed #333; padding-top: 20px; }
+        .chart-line-container { height: 250px; width: 100%; margin-top: 20px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .stat-box { background: #181818; padding: 10px; border-radius: 8px; text-align: center; }
+        .stat-val { display: block; font-weight: bold; color: white; font-size: 0.9rem; }
+        .stat-lbl { font-size: 0.7rem; color: #777; }
+
+        footer { text-align: center; font-size: 0.7rem; color: var(--text-sec); margin-top: 40px; opacity: 0.6; letter-spacing: 0.5px; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <img src="logo.png" alt="Clearview" class="logo-img">
+        <button class="hamburger" onclick="openNav()">&#9776;</button>
+    </nav>
+
+    <div id="mySidenav" class="sidenav">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+        <div class="menu-title">Canais de Atendimento</div>
+        <a href="https://wa.me/44991293357" target="_blank"><span>📱</span> WhatsApp</a>
+        <a href="mailto:contato@clearviewcapital.com.br"><span>✉️</span> E-mail</a>
+    </div>
+    <div id="overlay" class="overlay-bg" onclick="closeNav()"></div>
+
+    <div class="greeting-section">
+        <div class="greeting">Olá,</div>
+        <div class="client-name">Isabela Munhoz</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">
+            <span>Meus Ativos</span>
+            <span id="headerTotal" style="color:white">R$ 0,00</span>
+        </div>
+        <div class="chart-donut-container"><canvas id="assetsChart"></canvas></div>
+        <div class="total-center"><span id="labelTotal">Patrimônio Total</span><h3 id="displayTotal">R$ 0,00</h3></div>
+
+        <div class="input-group"><span class="input-label" style="border-left: 3px solid var(--c-rf); padding-left:8px;">Renda Fixa</span><input type="tel" class="money-input" id="rf" onkeyup="mask(this); updateAssets()"></div>
+        <div class="input-group"><span class="input-label" style="border-left: 3px solid var(--c-reserva); padding-left:8px;">Reserva Emergência</span><input type="tel" class="money-input" id="reserva" onkeyup="mask(this); updateAssets()"></div>
+        <div class="input-group"><span class="input-label" style="border-left: 3px solid var(--c-rv); padding-left:8px;">Renda Variável</span><input type="tel" class="money-input" id="rv" onkeyup="mask(this); updateAssets()"></div>
+        <div class="input-group"><span class="input-label" style="border-left: 3px solid var(--c-imov); padding-left:8px;">Imóveis/FIIs</span><input type="tel" class="money-input" id="imoveis" onkeyup="mask(this); updateAssets()"></div>
+        <div class="input-group"><span class="input-label" style="border-left: 3px solid var(--c-cripto); padding-left:8px;">Criptomoedas</span><input type="tel" class="money-input" id="cripto" onkeyup="mask(this); updateAssets()"></div>
+        <div class="input-group"><span class="input-label" style="border-left: 3px solid var(--c-inter); padding-left:8px;">Internacional</span><input type="tel" class="money-input" id="internacional" onkeyup="mask(this); updateAssets()"></div>
+        <div class="input-group"><span class="input-label" style="border-left: 3px solid var(--c-outros); padding-left:8px;">Outros</span><input type="tel" class="money-input" id="outros_ativos" onkeyup="mask(this); updateAssets()"></div>
+
+        <div class="meta-wrapper">
+            <div class="meta-info"><span>Meta: <input type="tel" class="meta-input-inline" id="metaVal" onkeyup="mask(this); updateAssets()"></span><span id="percText">0%</span></div>
+            <div class="progress-track"><div class="progress-fill" id="progBar"></div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Fluxo Mensal</div>
+        <div class="input-group"><span class="input-label" style="color:var(--success)">Salário Líquido</span><input type="tel" class="money-input" id="salario" style="color:var(--success)" onkeyup="mask(this); updateFlow()"></div>
+        
+        <div style="margin: 15px 0; border-top: 1px dashed #333;"></div>
+
+        <div class="cat-header" onclick="toggleCat('moradia')">
+            <span class="cat-title"><span class="arrow">▼</span> Moradia</span>
+            <span class="cat-total" id="tot-moradia">R$ 0,00</span>
+        </div>
+        <div id="cat-moradia" class="cat-content">
+            <div class="expense-row">
+                <input type="text" class="lbl-input" value="Aluguel/Parcela" id="lbl_m_1" style="color: var(--accent)" readonly>
+                <input type="tel" class="box-input expense-input" id="val_m_1" data-cat="moradia" onkeyup="mask(this); updateFlow()">
+                <select class="pay-select" id="pay_m_1" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select>
+            </div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_m_2" value="Seguros"><input type="tel" class="box-input expense-input" id="val_m_2" data-cat="moradia" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_m_2" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_m_3" value="Conta de Luz"><input type="tel" class="box-input expense-input" id="val_m_3" data-cat="moradia" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_m_3" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_m_4" value="Conta de Água"><input type="tel" class="box-input expense-input" id="val_m_4" data-cat="moradia" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_m_4" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_m_5" value="Telefone"><input type="tel" class="box-input expense-input" id="val_m_5" data-cat="moradia" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_m_5" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_m_6" value="Streaming"><input type="tel" class="box-input expense-input" id="val_m_6" data-cat="moradia" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_m_6" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_m_7" value="Internet"><input type="tel" class="box-input expense-input" id="val_m_7" data-cat="moradia" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_m_7" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_m_8" value="Eletrodomésticos"><input type="tel" class="box-input expense-input" id="val_m_8" data-cat="moradia" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_m_8" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_m_9" value="Melhorias"><input type="tel" class="box-input expense-input" id="val_m_9" data-cat="moradia" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_m_9" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_m_10" value="Outros"><input type="tel" class="box-input expense-input" id="val_m_10" data-cat="moradia" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_m_10" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+        </div>
+
+        <div class="cat-header" onclick="toggleCat('transporte')">
+            <span class="cat-title"><span class="arrow">▼</span> Transporte</span>
+            <span class="cat-total" id="tot-transporte">R$ 0,00</span>
+        </div>
+        <div id="cat-transporte" class="cat-content">
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_t_1" value="Parcela Carro"><input type="tel" class="box-input expense-input" id="val_t_1" data-cat="transporte" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_t_1" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_t_2" value="Seguro Carro"><input type="tel" class="box-input expense-input" id="val_t_2" data-cat="transporte" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_t_2" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_t_3" value="Combustível"><input type="tel" class="box-input expense-input" id="val_t_3" data-cat="transporte" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_t_3" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_t_4" value="Ônibus/App"><input type="tel" class="box-input expense-input" id="val_t_4" data-cat="transporte" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_t_4" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_t_5" value="Outros"><input type="tel" class="box-input expense-input" id="val_t_5" data-cat="transporte" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_t_5" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+        </div>
+
+        <div class="cat-header" onclick="toggleCat('saude')">
+            <span class="cat-title"><span class="arrow">▼</span> Saúde</span>
+            <span class="cat-total" id="tot-saude">R$ 0,00</span>
+        </div>
+        <div id="cat-saude" class="cat-content">
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_s_1" value="Seguro Vida"><input type="tel" class="box-input expense-input" id="val_s_1" data-cat="saude" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_s_1" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_s_2" value="Consulta"><input type="tel" class="box-input expense-input" id="val_s_2" data-cat="saude" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_s_2" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_s_3" value="Dentista"><input type="tel" class="box-input expense-input" id="val_s_3" data-cat="saude" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_s_3" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_s_4" value="Medicamentos"><input type="tel" class="box-input expense-input" id="val_s_4" data-cat="saude" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_s_4" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_s_5" value="Veterinário"><input type="tel" class="box-input expense-input" id="val_s_5" data-cat="saude" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_s_5" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_s_6" value="Outros"><input type="tel" class="box-input expense-input" id="val_s_6" data-cat="saude" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_s_6" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+        </div>
+
+        <div class="cat-header" onclick="toggleCat('obrigacoes')">
+            <span class="cat-title"><span class="arrow">▼</span> Obrigações</span>
+            <span class="cat-total" id="tot-obrigacoes">R$ 0,00</span>
+        </div>
+        <div id="cat-obrigacoes" class="cat-content">
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_o_1" value="Dívidas"><input type="tel" class="box-input expense-input" id="val_o_1" data-cat="obrigacoes" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_o_1" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_o_2" value="Empréstimo Estudantil"><input type="tel" class="box-input expense-input" id="val_o_2" data-cat="obrigacoes" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_o_2" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_o_3" value="Outros Empréstimos"><input type="tel" class="box-input expense-input" id="val_o_3" data-cat="obrigacoes" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_o_3" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_o_4" value="Cartão de Crédito"><input type="tel" class="box-input expense-input" id="val_o_4" data-cat="obrigacoes" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_o_4" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_o_5" value="Taxas e Impostos"><input type="tel" class="box-input expense-input" id="val_o_5" data-cat="obrigacoes" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_o_5" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_o_6" value="Outros"><input type="tel" class="box-input expense-input" id="val_o_6" data-cat="obrigacoes" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_o_6" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+        </div>
+
+        <div class="cat-header" onclick="toggleCat('vida')">
+            <span class="cat-title"><span class="arrow">▼</span> Vida Diária</span>
+            <span class="cat-total" id="tot-vida">R$ 0,00</span>
+        </div>
+        <div id="cat-vida" class="cat-content">
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_v_1" value="Supermercado"><input type="tel" class="box-input expense-input" id="val_v_1" data-cat="vida" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_v_1" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_v_2" value="Suprimentos Pessoais"><input type="tel" class="box-input expense-input" id="val_v_2" data-cat="vida" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_v_2" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_v_3" value="Roupas"><input type="tel" class="box-input expense-input" id="val_v_3" data-cat="vida" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_v_3" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_v_4" value="Produtos de Limpeza"><input type="tel" class="box-input expense-input" id="val_v_4" data-cat="vida" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_v_4" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_v_5" value="Jantar/Comer Fora"><input type="tel" class="box-input expense-input" id="val_v_5" data-cat="vida" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_v_5" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_v_6" value="Salão/Barbearia"><input type="tel" class="box-input expense-input" id="val_v_6" data-cat="vida" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_v_6" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_v_7" value="PetShop"><input type="tel" class="box-input expense-input" id="val_v_7" data-cat="vida" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_v_7" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_v_8" value="Outros"><input type="tel" class="box-input expense-input" id="val_v_8" data-cat="vida" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_v_8" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+        </div>
+
+        <div class="cat-header" onclick="toggleCat('entret')">
+            <span class="cat-title"><span class="arrow">▼</span> Entretenimento</span>
+            <span class="cat-total" id="tot-entret">R$ 0,00</span>
+        </div>
+        <div id="cat-entret" class="cat-content">
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_e_1" value="Filmes/Cinema"><input type="tel" class="box-input expense-input" id="val_e_1" data-cat="entret" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_e_1" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_e_2" value="Música"><input type="tel" class="box-input expense-input" id="val_e_2" data-cat="entret" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_e_2" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_e_3" value="Games"><input type="tel" class="box-input expense-input" id="val_e_3" data-cat="entret" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_e_3" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_e_4" value="Show"><input type="tel" class="box-input expense-input" id="val_e_4" data-cat="entret" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_e_4" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_e_5" value="Livros"><input type="tel" class="box-input expense-input" id="val_e_5" data-cat="entret" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_e_5" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_e_6" value="Hobbies"><input type="tel" class="box-input expense-input" id="val_e_6" data-cat="entret" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_e_6" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_e_7" value="Esportes"><input type="tel" class="box-input expense-input" id="val_e_7" data-cat="entret" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_e_7" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_e_8" value="Academia"><input type="tel" class="box-input expense-input" id="val_e_8" data-cat="entret" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_e_8" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_e_9" value="Passeios"><input type="tel" class="box-input expense-input" id="val_e_9" data-cat="entret" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_e_9" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_e_10" value="Férias"><input type="tel" class="box-input expense-input" id="val_e_10" data-cat="entret" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_e_10" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_e_11" value="Viagem"><input type="tel" class="box-input expense-input" id="val_e_11" data-cat="entret" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_e_11" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_e_12" value="Teatro"><input type="tel" class="box-input expense-input" id="val_e_12" data-cat="entret" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_e_12" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_e_13" value="Outros"><input type="tel" class="box-input expense-input" id="val_e_13" data-cat="entret" onkeyup="mask(this); updateFlow()"><select class="pay-select" id="pay_e_13" onchange="saveAllData()"><option value="" selected disabled style="display:none"></option><option>Pix</option><option>Cartão Crédito</option><option>Cartão Débito</option><option>Boleto</option><option>Dinheiro</option></select></div>
+        </div>
+
+        <div class="cat-header" onclick="toggleCat('economias')" style="border-color: var(--accent);">
+            <span class="cat-title" style="color:var(--accent)"><span class="arrow">▼</span> Economias (Alocação)</span>
+            <span class="cat-total" id="tot-economias">R$ 0,00</span>
+        </div>
+        <div id="cat-economias" class="cat-content">
+            <p style="font-size:0.7rem; color:#666; margin-bottom:10px;">*Estes valores não descontam do saldo.</p>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_ec_1" value="Para Reserva"><input type="tel" class="box-input eco-input" id="val_ec_1" onkeyup="mask(this); updateFlow()"></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_ec_2" value="Para Investimentos"><input type="tel" class="box-input eco-input" id="val_ec_2" onkeyup="mask(this); updateFlow()"></div>
+            <div class="expense-row"><input type="text" class="lbl-input" id="lbl_ec_3" value="Outros"><input type="tel" class="box-input eco-input" id="val_ec_3" onkeyup="mask(this); updateFlow()"></div>
+        </div>
+
+        <button class="btn-reset" onclick="resetFlow()">Limpar Mês (Manter Fixos)</button>
+
+        <div class="invest-result">
+            <span class="invest-label">Sobra de Caixa (Para Investir)</span>
+            <span class="invest-val" id="valInvest">R$ 0,00</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Calculadora de Futuro</div>
+        <div class="calc-grid">
+            <div class="calc-row">
+                <div class="col-half"><span class="calc-label">Aporte Inicial</span><input type="tel" class="calc-input-styled" id="calcInit" onkeyup="mask(this); saveAllData()"></div>
+                <div class="col-half"><span class="calc-label">Aporte Mensal</span><input type="tel" class="calc-input-styled" id="calcMonth" onkeyup="mask(this); saveAllData()"></div>
+            </div>
+            <div class="calc-row">
+                <div class="col-half"><span class="calc-label">Taxa Juros <select id="selJuros" class="custom-select" onchange="saveAllData()"><option value="aa">a.a</option><option value="am">a.m</option></select></span><input type="number" class="calc-input-styled" id="txJuros" onkeyup="saveAllData()"></div>
+                <div class="col-half"><span class="calc-label">Inflação <select id="selInf" class="custom-select" onchange="saveAllData()"><option value="aa">a.a</option><option value="am">a.m</option></select></span><input type="number" class="calc-input-styled" id="txInf" onkeyup="saveAllData()"></div>
+            </div>
+            <div class="calc-row">
+                <div class="col-half"><span class="calc-label">Período <select id="selTempo" class="custom-select" onchange="saveAllData()"><option value="anos">Anos</option><option value="meses">Meses</option></select></span><input type="number" class="calc-input-styled" id="tempo" onkeyup="saveAllData()"></div>
+                <div class="col-half" style="display:flex; align-items:end;"><button class="btn-calc" onclick="calculateProjection()">Calcular</button></div>
+            </div>
+        </div>
+        <div class="projection-container" id="projContainer">
+            <h3 style="text-align:center; color:white; font-size:1.1rem;">Resultado da Projeção</h3>
+            <div class="stats-grid">
+                <div class="stat-box"><span class="stat-lbl">Total Acumulado</span><span class="stat-val" style="color:var(--accent)" id="resFinal">--</span></div>
+                <div class="stat-box"><span class="stat-lbl">Total Investido</span><span class="stat-val" id="resInvestido">--</span></div>
+                <div class="stat-box"><span class="stat-lbl">Ganho Real</span><span class="stat-val" style="color:var(--success)" id="resJuros">--</span></div>
+                <div class="stat-box"><span class="stat-lbl">Poder de Compra</span><span class="stat-val" style="color:#aaa" id="resReal">--</span></div>
+            </div>
+            <div class="chart-line-container"><canvas id="lineChart"></canvas></div>
+        </div>
+    </div>
+
+    <footer>&copy; 2026 Clearview Capital. Todos os direitos reservados.</footer>
+
+    <script>
+        function openNav() { document.getElementById("mySidenav").style.width = "250px"; document.getElementById("overlay").style.display = "block"; }
+        function closeNav() { document.getElementById("mySidenav").style.width = "0"; document.getElementById("overlay").style.display = "none"; }
+
+        // --- EXPANDIR CATEGORIAS ---
+        function toggleCat(catId) {
+            const content = document.getElementById('cat-' + catId);
+            const header = content.previousElementSibling;
+            content.classList.toggle('show');
+            header.classList.toggle('active');
+        }
+
+        // --- ZERAR FLUXO (MENOS SALARIO E ALUGUEL) ---
+        function resetFlow() {
+            if(!confirm("Tem certeza que deseja zerar os gastos do mês?")) return;
+            
+            // Zera despesas e pagamentos (inputs que não são o Salario e o Aluguel)
+            document.querySelectorAll('.expense-input, .eco-input').forEach(input => {
+                if(input.id !== 'val_m_1') { // Mantém Aluguel
+                    input.value = '';
+                }
+            });
+            document.querySelectorAll('.pay-select').forEach(sel => {
+                if(sel.id !== 'pay_m_1') { // Mantém pgto Aluguel
+                    sel.value = '';
+                }
+            });
+            
+            updateFlow();
+        }
+
+        // --- DADOS DO TEMPLATE (ZERADOS) ---
+        const defaults = {
+            rf: 63252, reserva: 0, rv: 0, imoveis: 0, cripto: 0, internacional: 0, outros_ativos: 0,
+            metaVal: 0, salario: 0, calcInit: 63252, calcMonth: 0, txJuros: 10, txInf: 0, tempo: 10
+        };
+
+        function loadData() {
+            const saved = localStorage.getItem('clearview_isabela'); 
+            const data = saved ? JSON.parse(saved) : defaults;
+
+            // Ativos e Meta
+            ['rf','reserva','rv','imoveis','cripto','internacional','outros_ativos','metaVal','salario','calcInit','calcMonth']
+             .forEach(id => fillInput(id, data[id] !== undefined ? data[id] : defaults[id] || 0));
+            
+            document.getElementById('txJuros').value = data.txJuros || 10;
+            document.getElementById('txInf').value = data.txInf || 0;
+            document.getElementById('tempo').value = data.tempo || 10;
+
+            // Carregar Fluxo Dinâmico (Inputs de Valor)
+            if(data.fluxoValues) {
+                for (const [id, val] of Object.entries(data.fluxoValues)) {
+                    fillInput(id, val);
+                }
+            }
+            // Carregar Labels Editados
+            if(data.fluxoLabels) {
+                for (const [id, txt] of Object.entries(data.fluxoLabels)) {
+                    const el = document.getElementById(id);
+                    if(el) el.value = txt;
+                }
+            }
+            // Carregar Pagamentos
+            if(data.fluxoPays) {
+                for (const [id, val] of Object.entries(data.fluxoPays)) {
+                    const el = document.getElementById(id);
+                    if(el) el.value = val;
+                }
+            }
+        }
+
+        function saveAllData() {
+            const getVal = (id) => parseMoney(document.getElementById(id).value);
+            
+            // Coletar dados dinâmicos do fluxo
+            let fluxoValues = {};
+            let fluxoLabels = {};
+            let fluxoPays = {};
+
+            // Valores
+            document.querySelectorAll('.expense-input, .eco-input').forEach(el => {
+                fluxoValues[el.id] = parseMoney(el.value);
+            });
+            // Labels
+            document.querySelectorAll('.lbl-input').forEach(el => {
+                fluxoLabels[el.id] = el.value;
+            });
+            // Pagamentos
+            document.querySelectorAll('.pay-select').forEach(el => {
+                fluxoPays[el.id] = el.value;
+            });
+
+            const data = {
+                rf: getVal('rf'), reserva: getVal('reserva'), rv: getVal('rv'), imoveis: getVal('imoveis'),
+                cripto: getVal('cripto'), internacional: getVal('internacional'), outros_ativos: getVal('outros_ativos'),
+                metaVal: getVal('metaVal'), salario: getVal('salario'),
+                calcInit: getVal('calcInit'), calcMonth: getVal('calcMonth'),
+                txJuros: document.getElementById('txJuros').value, txInf: document.getElementById('txInf').value, tempo: document.getElementById('tempo').value,
+                fluxoValues: fluxoValues,
+                fluxoLabels: fluxoLabels,
+                fluxoPays: fluxoPays
+            };
+            localStorage.setItem('clearview_isabela', JSON.stringify(data));
+        }
+
+        function fillInput(id, val) { const el = document.getElementById(id); if(el) { el.value = val.toFixed(2).replace('.', ''); mask(el); } }
+        const parseMoney = (val) => { if(!val) return 0; if(typeof val === 'number') return val; return parseFloat(val.replace(/\D/g, '')) / 100; };
+        const formatBRL = (val) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        function mask(i) { let v = i.value.replace(/\D/g,''); v = (v/100).toFixed(2) + ''; v = v.replace(".", ","); v = v.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.'); i.value = 'R$ ' + v; }
+
+        let donutChart, lineChart;
+
+        function updateAssets() {
+            const vals = ['rf','reserva','rv','imoveis','cripto','internacional','outros_ativos'].map(id => parseMoney(document.getElementById(id).value));
+            const total = vals.reduce((a,b)=>a+b,0);
+            const meta = parseMoney(document.getElementById('metaVal').value);
+            document.getElementById('displayTotal').innerText = formatBRL(total);
+            document.getElementById('headerTotal').innerText = formatBRL(total);
+            let pct = meta > 0 ? (total/meta)*100 : 0; if(pct>100) pct=100;
+            document.getElementById('progBar').style.width = pct + '%'; document.getElementById('percText').innerText = pct.toFixed(1) + '%';
+
+            if(donutChart) { donutChart.data.datasets[0].data = vals; donutChart.update(); }
+            saveAllData();
+        }
+
+        function updateFlow() {
+            const sal = parseMoney(document.getElementById('salario').value);
+            
+            // Somar Despesas (exclui eco-input)
+            let desp = 0;
+            // Objeto para guardar totais por categoria
+            let catTotals = { moradia:0, transporte:0, saude:0, obrigacoes:0, vida:0, entret:0, economias:0 };
+
+            document.querySelectorAll('.expense-input').forEach(e => {
+                let val = parseMoney(e.value);
+                desp += val;
+                if(e.dataset.cat) catTotals[e.dataset.cat] += val;
+            });
+
+            // Somar Economias (separado)
+            document.querySelectorAll('.eco-input').forEach(e => {
+                catTotals['economias'] += parseMoney(e.value);
+            });
+
+            // Atualizar Totais nas Headers
+            for (const [cat, total] of Object.entries(catTotals)) {
+                const el = document.getElementById('tot-' + cat);
+                if(el) el.innerText = formatBRL(total);
+            }
+
+            const sobra = sal - desp;
+            const el = document.getElementById('valInvest'); el.innerText = formatBRL(sobra); el.style.color = sobra < 0 ? 'var(--danger)' : 'var(--accent)';
+            saveAllData();
+        }
+
+        function calculateProjection() {
+            const getFloat = (id) => {
+                let val = document.getElementById(id).value;
+                if(!val) return 0;
+                val = val.replace(',', '.'); 
+                return parseFloat(val) || 0; 
+            };
+
+            const P = parseMoney(document.getElementById('calcInit').value);
+            const PMT = parseMoney(document.getElementById('calcMonth').value);
+            const tempo = getFloat('tempo');
+            const juros = getFloat('txJuros');
+            const inflacao = getFloat('txInf');
+
+            if (tempo === 0) return;
+
+            let meses = document.getElementById('selTempo').value === 'anos' ? tempo * 12 : tempo;
+            // Taxa mensal equivalente
+            let i_m = document.getElementById('selJuros').value === 'aa' ? (Math.pow(1 + juros/100, 1/12) - 1) : (juros/100);
+            let inf_m = document.getElementById('selInf').value === 'aa' ? (Math.pow(1 + inflacao/100, 1/12) - 1) : (inflacao/100);
+
+            let labels = [], dTotal = [], dInvest = [], dReal = [];
+            let cTotal = P, cInvest = P, cReal = P;
+
+            for(let m = 0; m <= meses; m++) {
+                
+                // 1. ADD TO CHART (CONDITIONAL)
+                if(meses <= 60 || m % 12 === 0 || m === meses) {
+                    if (meses > 60) labels.push(`Ano ${Math.floor(m/12)}`);
+                    else labels.push(m);
+                    dTotal.push(cTotal);
+                    dInvest.push(cInvest);
+                    dReal.push(cReal);
+                }
+
+                // 2. CALCULATE NEXT MONTH (ALWAYS RUNS)
+                if(m < meses) {
+                    cTotal = cTotal * (1 + i_m) + PMT;
+                    cInvest += PMT;
+                    cReal = (cReal * (1 + i_m) / (1 + inf_m)) + PMT;
+                }
+            }
+            
+            document.getElementById('projContainer').style.display = 'block';
+            document.getElementById('resFinal').innerText = formatBRL(cTotal);
+            document.getElementById('resInvestido').innerText = formatBRL(cInvest);
+            document.getElementById('resJuros').innerText = formatBRL(cReal - cInvest); // Aproximação ganho real
+            document.getElementById('resReal').innerText = formatBRL(cReal);
+            renderLineChart(labels, dTotal, dInvest, dReal);
+            saveAllData();
+        }
+
+        function renderLineChart(lbls, dTotal, dInvest, dReal) {
+            const ctx = document.getElementById('lineChart').getContext('2d');
+            if(lineChart) lineChart.destroy();
+            let grad = ctx.createLinearGradient(0, 0, 0, 400); grad.addColorStop(0, 'rgba(255, 204, 0, 0.5)'); grad.addColorStop(1, 'rgba(255, 204, 0, 0.0)');
+            lineChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: lbls,
+                    datasets: [
+                        { label: 'Patrimônio', data: dTotal, borderColor: '#ffcc00', backgroundColor: grad, fill: true, tension: 0.4 },
+                        { label: 'Investido', data: dInvest, borderColor: '#fff', borderDash: [5,5], tension: 0.4, pointRadius: 0 },
+                        { label: 'Poder Compra', data: dReal, borderColor: '#00e676', tension: 0.4, pointRadius: 0 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { labels: { color: '#ccc' } }, tooltip: { callbacks: { label: c => ' ' + c.dataset.label + ': ' + c.raw.toLocaleString('pt-BR',{style:'currency', currency:'BRL'}) } } },
+                    scales: { x: { display: false }, y: { grid: { color: '#222' }, ticks: { color: '#666', callback: v => v/1000 + 'k' } } }
+                }
+            });
+        }
+
+        window.onload = function() {
+            loadData();
+            const ctxD = document.getElementById('assetsChart').getContext('2d');
+            donutChart = new Chart(ctxD, {
+                type: 'doughnut',
+                data: {
+                    labels: ['RF', 'Reserva', 'RV', 'Imóveis', 'Cripto', 'Inter.', 'Outros'],
+                    datasets: [{
+                        data: [1,1,1,1,1,1,1], 
+                        backgroundColor: ['#ffcc00', '#ffe680', '#ffffff', '#d1d1d1', '#787878', '#4a4a4a', '#8c6e00'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#888', font:{size:9}, boxWidth:8 } } }, cutout: '70%' }
+            });
+            updateAssets(); updateFlow();
+        };
+    </script>
+</body>
+</html>
